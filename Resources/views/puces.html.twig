@@ -1,0 +1,53 @@
+{% extends 'AdminBundle::layout.html.twig' %}
+
+{% block body_complement %}id="users" class="page-list"{% endblock %}
+
+{% block body %}
+    <div class="wrap">
+        <div class="head">
+            <h2><i class="icon-otag"></i>Commander des <strong>Puces</strong> &nbsp;(20 puces par sachet)</h2>
+        </div> <!-- head -->
+            {{ form_start(form) }}
+            <div class="col">
+                <img src="{{ asset('bundles/mdsocom/image/puces-sachet.jpg') }}" style="max-width:70%; margin-left:15%;"/>
+            </div>
+            <div class="col">
+                {{ form_row(form.clientReference) }}
+                {{ form_row(form.quantity) }}
+                <div class="result">
+                    <h2>Récapitulatif</h2>
+                    <p>
+                        <span id="quantity">2</span> x {{ price_sachet }} <sup>€ HT</sup>
+                    <hr/>
+                    <span id="price">{{ price_sachet * 2 }}</span> <sup>€ HT</sup>
+                    </p>
+                    <br/>
+                    <p style="text-align:center;">
+                        <input type="submit" value="Je commande">
+                    </p>
+                </div>
+            </div>
+            {{ form_widget(form) }}
+        {{ form_end(form) }}
+
+        <br/><br/>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        $(function () {
+            $("#o_tag_quantity").on("change keyup", function (e) {
+                e.preventDefault();
+                var qte = parseInt($(this).val());
+
+                if (isNaN(qte)) {
+                    qte = 0;
+                }
+
+                $("#quantity").text(qte);
+                $("#price").text(qte * {{ price_sachet }});
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'AdminBundle::layout.html.twig' %}
+
+{% block body_complement %}id="users" class="page-list"{% endblock %}
+
+{% block body %}
+    <div class="wrap">
+        <div class="head">
+            <h2><i class="icon-users"></i>Mes <strong>Factures</strong></h2>
+            <a href="#" class="btn btn-add" id="infobank">Changer mes informations bancaire <i class="icon-add"></i></a>
+        </div> <!-- head -->
+
+        <table class="list-users">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>N° Facture</th>
+                    <th>Montant TTC</th>
+                    <th>Réglement</th>
+                    <th>Détail</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody class="list">
+            {% for i in invoices %}
+                <tr>
+                    <td>{{ i.created_at|date('d/m/Y') }}</td>
+                    <td>{{ i.number }}</td>
+                    <td>{{ i.price.net_total|number_format(2, ',', ' ') }} <sup>€ TTC</sup></td>
+                    <td>
+                        {% set echeance = i.created_at|date_modify("+1 month")|date("Ymd") %}
+                        {% set datemax = i.created_at|date_modify("+1 month")|date("d/m/Y") %}
+                        {% if i.paid_at is defined and i.paid_at %}
+                            Le {{ i.paid_at|date('d/m/Y') }}
+                        {% else %}
+                            {% if echeance >= 'now'|date("Ymd") %}
+                                <strong>À régler avant le {{ datemax }}</strong>
+                            {% else %}
+                                <i class="icon-warning" style="color:red;"></i><strong>À régler avant le {{ datemax }}</strong>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>{{ i.description }}</td>
+                    <td>
+                        <a class="btn" target="_blank" href="{{ path('md_socom_application_invoice_show', {'id': i.id}) }}">
+                            <i class="icon-look"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <ul class="pagination"></ul>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        $(function () {
+            $("#infobank").on("click", function (e) {
+                e.preventDefault();
+
+                swal({
+                    title: 'Coordonnées bancaires',
+                    html: '<input id="swal-iban" class="swal2-input" value="{{ client.iban }}">' +
+                    '<input id="swal-bic" class="swal2-input" value="{{ client.bic }}">',
+                    showCancelButton: true,
+                    confirmButtonText: 'Valider',
+                    showLoaderOnConfirm: true,
+                    allowOutsideClick: false,
+                    preConfirm: function () {
+                        return new Promise(function (resolve) {
+                            var iban = $('#swal-iban').val().replace(/ /g,'');
+                            var bic = $('#swal-bic').val().replace(/ /g,'');
+                            if (!iban || !bic) {
+                                swal.showValidationError("Tous les champs doivent être remplis!");
+                            } else {
+                                var rgxiban = /[a-zA-Z]{2}[0-9]{2}[a-zA-Z0-9]{4}[0-9]{7}([a-zA-Z0-9]?){0,16}/;
+                                if (rgxiban.test(iban) === false) {
+                                    swal.showValidationError("La forme de l'IBAN est incorrect");
+                                }
+                            }
+                            $.post( "{{ path('md_socom_application_update_bank') }}", {iban: iban, bic: bic} )
+                                .done(function(data) {
+                                    console.log(data);
+                                    if (!data.id) {
+                                        if (typeof data === 'object') {
+                                            errs = '';
+                                            $.each(data, function(i, item) {
+                                                errs += item.message + '<br />';
+                                            })
+                                        }
+
+                                        swal.showValidationError(errs);
+                                    } else {
+                                        resolve();
+                                    }
+
+                                    resolve();
+                                }).fail(function(err) {
+                                    swal.showValidationError(err.statusText);
+                                });
+                        });
+                    }
+                }).then(function () {
+                    swal({
+                        type: 'success',
+                        title: 'Opération réussie !'
+                    }).then(function () {
+                        location.reload();
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}
