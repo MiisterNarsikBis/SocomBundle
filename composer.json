@@ -1,5 +1,5 @@
 {
-    "name": "md/socom-bundle",
+    "name": "mobiledev-pro-new/socom-bundle",
     "type": "symfony-bundle",
     "description": "This bundle is used for specific needs of MobileDev",
     "keywords": ["MobileDev-pro"],
